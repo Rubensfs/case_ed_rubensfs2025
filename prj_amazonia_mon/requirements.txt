@@ -1,0 +1,8 @@
+# Dependências principais do projeto
+
+# PySpark para ETL distribuído
+pyspark==3.5.0  
+pydrive2==1.19.0
+lxml==5.2.1
+requests==2.32.3
+pandas==2.2.2
