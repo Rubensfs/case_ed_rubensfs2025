@@ -71,6 +71,13 @@ Para a versão paga Databricks+Azure
    - Workflows → Create Job → Import JSON
      json está na pasta /config/   
 ---
+Pago : 
+criar um cluster...
+instalar as lib: 
+  (Maven):com.databricks:spark-xml_2.12... - Para leitura dos XML
+  (Maven): org.locationtech.rasterframes:rasterframes_2.12 - para manipulacao de arquivos TIFF
+  pillow                           - para leitura de imagem   
+
 
 ````
 
