@@ -1,0 +1,54 @@
+name: Workflow_ingesta_INPE_Diario
+description: >
+  Pipeline diário para ingestão dos focos de queimadas do INPE.
+  1. Baixa o CSV do dia.
+  2. Salva em /Volumes/datamasters/raw/raw_inpe/.
+  3. Dispara o job Job_d_ingesta_Foco_Queim para processamento bronze.
+
+schedule:
+  quartz_cron_expression: "0 3 * * * ?"   # Executa às 03h00 UTC diariamente
+  timezone_id: "America/Sao_Paulo"
+  pause_status: UNPAUSED
+
+tasks:
+  - task_key: task_ingesta_raw_inpe
+    description: >
+      Baixa e armazena o arquivo focos_diario_br_AAAAMMDD.csv do dataset público do INPE.
+    notebook_task:
+      notebook_path: /Repos/Datamasters/Jobs/Job_a_ingesta_INPE_RAW
+      base_parameters:
+        output_path: /Volumes/datamasters/raw/raw_inpe
+    job_cluster_key: job_cluster_ingesta
+    timeout_seconds: 1800  # 30 min
+    max_retries: 1
+    min_retry_interval_millis: 300000  # 5 min
+
+  - task_key: task_dispara_job_bronze
+    description: >
+      Dispara o job que processa a tabela bronze (Job_d_ingesta_Foco_Queim).
+    depends_on:
+      - task_key: task_ingesta_raw_inpe
+    notebook_task:
+      notebook_path: /Repos/Datamasters/Jobs/Job_a_ingesta_INPE_RAW
+      base_parameters:
+        run_bronze_job: "true"
+    job_cluster_key: job_cluster_ingesta
+    timeout_seconds: 1800
+
+job_clusters:
+  - job_cluster_key: job_cluster_ingesta
+    new_cluster:
+      spark_version: 14.3.x-scala2.12
+      num_workers: 1
+      node_type_id: Standard_DS3_v2
+      data_security_mode: SINGLE_USER
+      runtime_engine: STANDARD
+      spark_conf:
+        "spark.sql.shuffle.partitions": "4"
+        "spark.databricks.delta.preview.enabled": "true"
+
+email_notifications:
+  on_failure:
+    - seu.email@empresa.com
+
+max_concurrent_runs: 1
