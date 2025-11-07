@@ -28,7 +28,7 @@ resources:
             notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/bronze/ingesta_d_foco_queim
             base_parameters:
               catalog: datamasters
-              schema: b_tbra
+              schema: b_inep
               table: focos_queimadas_diario
               path_raw: /Volumes/datamasters/raw/raw_inpe
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
@@ -44,9 +44,9 @@ resources:
             notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/silver/process_d_foco_queim_silver
             base_parameters:
               catalog: datamasters
-              schema_bronze: b_tbra
+              schema_bronze: b_inep
               table_bronze: focos_queimadas_diario
-              schema_silver: s_tbra
+              schema_silver: s_inep
               table_silver: d_foco_queim_format
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
             source: WORKSPACE
@@ -61,9 +61,9 @@ resources:
             notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/gold/d_foco_queim_gold_agregado
             base_parameters:
               catalog: datamasters
-              schema_silver: s_tbra
+              schema_silver: s_inep
               table_silver: d_foco_queim_format
-              schema_gold: g_tbra
+              schema_gold: g_inep
               table_gold: d_focos_queimadas_agg
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
             source: WORKSPACE
