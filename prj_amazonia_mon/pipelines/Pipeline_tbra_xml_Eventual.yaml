@@ -1,0 +1,87 @@
+resources:
+  jobs:
+    pipeline_prodes_tbra:
+      name: pipeline_prodes_tbra
+      description: Pipeline completa PRODES (RAW → BRONZE → SILVER → GOLD)
+      tasks:
+        - task_key: ingesta_raw_xml
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/API/INPE_Raw_Download
+            base_parameters:
+              catalog: datamasters
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              uuid_metadata: "{{job.parameters.uuid_metadata}}"
+              file_prefix: "{{job.parameters.file_prefix}}"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          description: Baixa o XML do TerraBrasilis e salva na camada RAW
+        - task_key: process_bronze
+          depends_on:
+            - task_key: ingesta_raw_xml
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/bronze/ingesta_raw_xml
+            base_parameters:
+              catalog: datamasters
+              schema: b_tbra
+              table: "{{job.parameters.file_prefix}}"
+              path_raw: /Volumes/datamasters/raw/raw_tbra
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          libraries:
+            - maven:
+                coordinates: com.databricks:spark-xml_2.12:0.17.0
+          description: Lê XML do RAW e grava tabela Bronze
+        - task_key: process_silver
+          depends_on:
+            - task_key: process_bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/silver/process_silver_xml
+            base_parameters:
+              catalog: datamasters
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              schema: b_tbra
+              table: "{{job.parameters.file_prefix}}"
+              schema_out: s_tbra
+              table_out: "{{job.parameters.file_prefix}}_process"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          description: Bronze → Silver
+        - task_key: process_gold
+          depends_on:
+            - task_key: process_silver
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/gold/e_tbras_xml_gold_valor
+            base_parameters:
+              catalog: datamasters
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              schema_in: s_tbra
+              table_in: "{{job.parameters.file_prefix}}_process"
+              schema_out: g_tbra
+              table_out: "{{job.parameters.file_prefix}}_valor"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          description: Silver → Gold
+      job_clusters:
+        - job_cluster_key: Shared_Cluster
+          new_cluster:
+            cluster_name: ""
+            spark_version: 14.3.x-scala2.12
+            azure_attributes:
+              availability: ON_DEMAND_AZURE
+            node_type_id: Standard_D4pds_v6
+            enable_elastic_disk: true
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            num_workers: 1
+      queue:
+        enabled: true
+      parameters:
+        - name: catalog
+          default: datamasters
+        - name: data_ref_carga
+          default: "{{job.trigger.time.iso_date}}"
+        - name: uuid_metadata
+          default: fe02f2bf-2cc0-49d5-ab72-a3954f997408
+        - name: file_prefix
+          default: prodes_brasil

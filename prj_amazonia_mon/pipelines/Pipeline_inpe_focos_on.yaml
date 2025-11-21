@@ -67,7 +67,7 @@ tasks:
       - task_key: INPE_BRONZE_STREAM
     job_cluster_key: cluster_inpe_focos
     notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Silver_Process
+      notebook_path: /Repos/datamasters/inpe/INPE_Silver_Focoq_Process_ByOnline
       base_parameters:
         DATA_ALVO: "{{parameters.DATA_ALVO}}"
     timeout_seconds: 1800
@@ -81,7 +81,7 @@ tasks:
       - task_key: INPE_SILVER_PROCESS
     job_cluster_key: cluster_inpe_focos
     notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Gold_Aggregation
+      notebook_path: /Repos/datamasters/inpe/INPE_Gold_Agg_FocoQ_ByOnline
       base_parameters:
         DATA_ALVO: "{{parameters.DATA_ALVO}}"
     timeout_seconds: 1200
