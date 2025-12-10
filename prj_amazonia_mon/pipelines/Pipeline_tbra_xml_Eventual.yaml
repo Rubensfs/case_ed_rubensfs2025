@@ -1,7 +1,7 @@
 resources:
   jobs:
-    pipeline_prodes_tbra:
-      name: pipeline_prodes_tbra
+    Pipeline_tbra_xml_Eventual:
+      name: Pipeline_tbra_xml_Eventual
       description: Pipeline completa PRODES (RAW → BRONZE → SILVER → GOLD)
       tasks:
         - task_key: ingesta_raw_xml

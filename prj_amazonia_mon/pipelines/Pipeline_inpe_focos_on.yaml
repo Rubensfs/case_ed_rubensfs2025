@@ -1,102 +1,104 @@
-# ============================================================
-# Databricks Workflow: INPE_FOCOS_QUEIM_STREAM_10
-# ============================================================
-name: INPE_FOCOS_QUEIM_STREAM_10
-description: >
-  Pipeline de ingestão e processamento em tempo quase real dos focos de queimadas do INPE.
-  Estrutura modular em 4 etapas: RAW → BRONZE → SILVER → GOLD.
+resources:
+  jobs:
+    Pipeline_INPE_FocosQueimadas_Stream_Online:
+      name: Pipeline_INPE_FocosQueimadas_Stream_Online
+      description: Pipeline ONLINE (quase real-time) INPE Focos Queimadas — RAW → BRONZE(Streaming) → SILVER → GOLD
 
-# ============================================================
-# Parâmetros principais
-# ============================================================
-parameters:
-  - name: DATA_ALVO
-    default: "{{current_date(format='yyyyMMdd')}}"
-    description: Data no formato AAAAMMDD (ex: 20251112)
+      # ============================================================
+      # SCHEDULE – EXECUTA A CADA 30 MINUTOS
+      # ============================================================
+      schedule:
+        quartz_cron_expression: "0 0/30 * * * ?"
+        timezone_id: America/Sao_Paulo
+        pause_status: UNPAUSED
 
-# ============================================================
-# Configuração do cluster padrão
-# ============================================================
-job_clusters:
-  - job_cluster_key: cluster_inpe_focos
-    new_cluster:
-      spark_version: 14.3.x-scala2.12
-      node_type_id: Standard_DS3_v2
-      num_workers: 2
-      data_security_mode: SINGLE_USER
-      runtime_engine: STANDARD
-      spark_conf:
-        spark.databricks.delta.preview.enabled: "true"
-        spark.sql.shuffle.partitions: "4"
-      custom_tags:
-        project: INPE_FOCOS
+      # ============================================================
+      # TASKS
+      # ============================================================
+      tasks:
 
-# ============================================================
-# TASK 1 — INPE RAW DOWNLOAD
-# ============================================================
-tasks:
-  - task_key: INPE_RAW_DOWNLOAD
-    description: Baixa os CSVs de 10 minutos do INPE e grava na camada RAW.
-    job_cluster_key: cluster_inpe_focos
-    notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Raw_Download
-      base_parameters:
-        DATA_ALVO: "{{parameters.DATA_ALVO}}"
-    timeout_seconds: 1800
+        # ------------------------------
+        # 1) RAW DOWNLOAD 10-MIN
+        # ------------------------------
+        - task_key: job_inpe_raw_download
+          notebook_task:
+            notebook_path: /Workspace/prj_amazonia_mon/notebooks/API/INPE_Raw_Download
+            base_parameters:
+              DATA_ALVO: "{{job.parameters.DATA_ALVO}}"
+          job_cluster_key: Stream_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Baixa CSV do INPE (10 minutos) e grava na camada RAW
 
-# ============================================================
-# TASK 2 — INPE BRONZE STREAM
-# ============================================================
-  - task_key: INPE_BRONZE_STREAM
-    description: Inicia o streaming dos arquivos CSV da RAW para a camada Bronze.
-    depends_on:
-      - task_key: INPE_RAW_DOWNLOAD
-    job_cluster_key: cluster_inpe_focos
-    notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Bronze_Stream
-      base_parameters:
-        DATA_ALVO: "{{parameters.DATA_ALVO}}"
-    timeout_seconds: 3600
+        # ------------------------------
+        # 2) BRONZE STREAM
+        # ------------------------------
+        - task_key: job_inpe_bronze_stream
+          depends_on:
+            - task_key: job_inpe_raw_download
+          notebook_task:
+            notebook_path: /Workspace/prj_amazonia_mon/notebooks/bronze/INPE_Bronze_Stream
+            base_parameters:
+              DATA_ALVO: "{{job.parameters.DATA_ALVO}}"
+          job_cluster_key: Stream_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Ingestão contínua Streaming da RAW → Bronze
 
-# ============================================================
-# TASK 3 — INPE SILVER PROCESS
-# ============================================================
-  - task_key: INPE_SILVER_PROCESS
-    description: Processa e formata os dados da camada Bronze para Silver.
-    depends_on:
-      - task_key: INPE_BRONZE_STREAM
-    job_cluster_key: cluster_inpe_focos
-    notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Silver_Focoq_Process_ByOnline
-      base_parameters:
-        DATA_ALVO: "{{parameters.DATA_ALVO}}"
-    timeout_seconds: 1800
+        # ------------------------------
+        # 3) SILVER PROCESS
+        # ------------------------------
+        - task_key: job_inpe_silver_process
+          depends_on:
+            - task_key: job_inpe_bronze_stream
+          notebook_task:
+            notebook_path: /Workspace/prj_amazonia_mon/notebooks/silver/INPE_Silver_Focoq_Process_ByOnline
+            base_parameters:
+              DATA_ALVO: "{{job.parameters.DATA_ALVO}}"
+          job_cluster_key: Stream_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Sanitiza e processa dados Bronze → Silver
 
-# ============================================================
-# TASK 4 — INPE GOLD AGGREGATION
-# ============================================================
-  - task_key: INPE_GOLD_AGGREGATION
-    description: Agrega dados da Silver por estado e bioma, gerando tabela diária GOLD.
-    depends_on:
-      - task_key: INPE_SILVER_PROCESS
-    job_cluster_key: cluster_inpe_focos
-    notebook_task:
-      notebook_path: /Repos/datamasters/inpe/INPE_Gold_Agg_FocoQ_ByOnline
-      base_parameters:
-        DATA_ALVO: "{{parameters.DATA_ALVO}}"
-    timeout_seconds: 1200
+        # ------------------------------
+        # 4) GOLD AGGREGATION
+        # ------------------------------
+        - task_key: job_inpe_gold_aggregation
+          depends_on:
+            - task_key: job_inpe_silver_process
+          notebook_task:
+            notebook_path: /Workspace/prj_amazonia_mon/notebooks/gold/INPE_Gold_Agg_FocoQ_ByOnline
+            base_parameters:
+              DATA_ALVO: "{{job.parameters.DATA_ALVO}}"
+          job_cluster_key: Stream_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Agregação (UF/Bioma) da Silver → GOLD
 
-# ============================================================
-# Configuração de execução e notificações
-# ============================================================
-schedule:
-  quartz_cron_expression: "0 0/30 * * * ?"   # Executa a cada 30 minutos
-  timezone_id: America/Sao_Paulo
+      # ============================================================
+      # CLUSTER STREAMING (COMPARTILHADO ENTRE AS TASKS)
+      # ============================================================
+      job_clusters:
+        - job_cluster_key: Stream_Cluster
+          new_cluster:
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_DS3_v2
+            num_workers: 2
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            enable_elastic_disk: true
+            spark_conf:
+              spark.databricks.delta.preview.enabled: "true"
+              spark.sql.shuffle.partitions: "4"
+            custom_tags:
+              project: INPE_FOCOS_STREAM
 
-email_notifications:
-  on_failure:
-    - "rubens@datamasters.com.br"
-  on_success:
-    - "rubens@datamasters.com.br"
+      # ============================================================
+      # QUEUE E PARAMETROS GLOBAIS
+      # ============================================================
+      queue:
+        enabled: true
 
-max_concurrent_runs: 1
+      parameters:
+        - name: DATA_ALVO
+          default: "{{job.trigger.time.iso_date}}"

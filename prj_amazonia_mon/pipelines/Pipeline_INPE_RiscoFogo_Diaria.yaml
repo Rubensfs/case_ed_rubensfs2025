@@ -8,9 +8,9 @@ resources:
         timezone_id: America/Sao_Paulo
         pause_status: UNPAUSED
       tasks:
-        - task_key: job_capture_csv_inpe
+        - task_key: job_capture_nc_inpe
           notebook_task:
-            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/API/capture_raw_focos_diario_d
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/API/capture_ingesta_inpe_risco_fogo_diario
             base_parameters:
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
               url_csv: https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_
@@ -21,50 +21,59 @@ resources:
           min_retry_interval_millis: 0
           description: Baixa o arquivo nc diário de Risco de Fogo do INPE e grava na
             camada RAW
-        - task_key: job_d_ingesta_foco_queim
+        - task_key: job_d_ingesta_FireRisk
           depends_on:
-            - task_key: job_capture_csv_inpe
+            - task_key: job_capture_nc_inpe
           notebook_task:
-            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/bronze/ingesta_d_foco_queim
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/bronze/ingesta_d_risco_fogo
             base_parameters:
               catalog: datamasters
               schema: b_inep
-              table: focos_queimadas_diario
+              table: risco_fogo_diario
               path_raw: /Volumes/datamasters/raw/raw_inpe
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
             source: WORKSPACE
-          job_cluster_key: Shared_Cluster
+          existing_cluster_id: 1207-000934-3vc2ja8p
+          libraries:
+            - pypi:
+                package: xarray
+            - pypi:
+                package: netCDF4
+            - pypi:
+                package: rasterio
+            - pypi:
+                package: "scipy "
           max_retries: 1
           min_retry_interval_millis: 0
           description: Lê o CSV da camada RAW e grava na tabela Bronze
-        - task_key: job_d_foco_queim_silver
+        - task_key: job_d_FireRisk_silver
           depends_on:
-            - task_key: job_d_ingesta_foco_queim
+            - task_key: job_d_ingesta_FireRisk
           notebook_task:
-            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/silver/process_d_foco_queim_silver
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/silver/d_firerisk_inc_silver
             base_parameters:
               catalog: datamasters
               schema_bronze: b_inep
-              table_bronze: focos_queimadas_diario
+              table_bronze: risco_fogo_diario
               schema_silver: s_inep
-              table_silver: d_foco_queim_format
+              table_silver: d_risco_fogo_format
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
             source: WORKSPACE
           job_cluster_key: Shared_Cluster
           max_retries: 1
           min_retry_interval_millis: 0
           description: Lê a tabela Bronze e aplica sanitização, grava na tabela Silver
-        - task_key: job_d_foco_queim_gold_agregado
+        - task_key: job_d_risco_fogo_gold_agregado
           depends_on:
-            - task_key: job_d_foco_queim_silver
+            - task_key: job_d_FireRisk_silver
           notebook_task:
-            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/gold/d_foco_queim_gold_agregado
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/gold/d_risco_fogo_gold_agg
             base_parameters:
               catalog: datamasters
               schema_silver: s_inep
-              table_silver: d_foco_queim_format
+              table_silver: d_risco_fogo_format
               schema_gold: g_inep
-              table_gold: d_focos_queimadas_agg
+              table_gold: d_risco_fogo_agg
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
             source: WORKSPACE
           job_cluster_key: Shared_Cluster
