@@ -3,6 +3,7 @@ Case para processo de certificação DataMasters_Engenharia de Dados do Santande
 ---
 🌱 Case de Engenharia de Dados
 Monitoramento Ambiental da Amazônia com Dados Públicos do INPE
+
 📌 Visão Geral
 
 Este projeto apresenta uma solução completa de engenharia de dados, desenvolvida para ingestão, processamento, armazenamento e análise de dados ambientais públicos relacionados ao monitoramento da Floresta Amazônica.
@@ -20,6 +21,7 @@ Observabilidade de pipelines
 Segurança e conformidade com LGPD
 
 Reprodutibilidade da solução
+
 
 I. 🎯 Objetivo do Case
 
@@ -39,11 +41,13 @@ Meio Ambiente — Monitoramento da Floresta Amazônica
 
 A escolha do tema se justifica pela relevância ambiental, social e econômica, além da ampla disponibilidade de dados governamentais abertos, mantidos pelo Instituto Nacional de Pesquisas Espaciais (INPE).
 
+
 II. 🌍 Fontes de Dados
 
 Os dados utilizados no projeto são obtidos a partir do portal oficial TerraBrasilis / INPE:
 
 🔗 https://terrabrasilis.dpi.inpe.br/
+
 
 📊 Conjuntos de Dados Utilizados
 1. Desmatamento — PRODES / INPE
@@ -72,6 +76,7 @@ Formatos: NetCDF (.nc), TIF
 
 Descrição:
 Dados observados diariamente e previsões meteorológicas de curto prazo, utilizados para cálculo do risco de fogo.
+
 
 III. 🏗️ Arquitetura da Solução
 Visão Geral da Arquitetura
@@ -137,6 +142,7 @@ Agregações Gold
 📁 Arquivo:
 diagrams/c4_pipeline_components.drawio
 
+
 V. 🧩 Arquitetura de Dados (Medalhão)
 
 O projeto adota o padrão Medallion Architecture, organizando os dados em camadas bem definidas:
@@ -146,6 +152,7 @@ RAW	Dados brutos, sem qualquer transformação
 BRONZE	Padronização inicial e versionamento
 SILVER	Dados tratados, tipados e confiáveis
 GOLD	Dados agregados e prontos para análise
+
 VI. 🔄 Pipelines Implementados
 
 Esta seção descreve os pipelines de ingestão e processamento desenvolvidos no projeto, contemplando execuções batch, eventuais e near real-time, todos organizados segundo a arquitetura medalhão.
@@ -271,6 +278,10 @@ https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/10min/
 Armazenamento RAW:
 /Volumes/datamasters/raw/raw_inpe/inpe_in/
 
+
+**EM docs/ em a evidencia de teste intergrado,com a execuções completas das pipelines**
+
+
 VII. 📊 Observabilidade
 
 A observabilidade da solução é garantida por:
@@ -283,6 +294,7 @@ Métricas de consumo de recursos
 
 Base para integração futura com Azure Monitor
 
+
 VIII. 🔐 Segurança e LGPD
 
 Controle de acesso baseado em RBAC do Azure
@@ -293,6 +305,7 @@ Criptografia de dados at rest e in transit
 
 Práticas alinhadas à Lei Geral de Proteção de Dados (LGPD)
 
+
 IX. 🕶️ Mascaramento de Dados
 
 Quando aplicável:
@@ -302,6 +315,7 @@ Criptografia de campos sensíveis via PySpark
 Mascaramento lógico nas camadas Silver e Gold
 
 Acesso restrito via APIs ou visões controladas
+
 
 X. 📈 Escalabilidade
 
@@ -314,6 +328,7 @@ Processamento distribuído Spark
 Ajuste dinâmico de recursos conforme custo e demanda
 
 Preparação para expansão com arquiteturas de streaming mais robustas
+
 
 XI. 🔁 Reprodutibilidade
 
@@ -335,6 +350,7 @@ Workspace Databricks configurado
 
 Cluster com suporte a PySpark e Delta Lake
 
+
 XII. 🚀 Melhorias Futuras
 
 Integração com Apache Kafka
@@ -346,6 +362,7 @@ Dashboards analíticos (Power BI)
 Catálogo de dados e lineage
 
 Modelos preditivos de risco ambiental
+
 
 XIII. 📌 Considerações Finais
 
