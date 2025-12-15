@@ -1,0 +1,41 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="C4_Context">
+    <mxGraphModel dx="1120" dy="720" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Fonte Externa -->
+        <mxCell id="2" value="TerraBrasilis / INPE&#xa;- PRODES&#xa;- Focos de Queimadas&#xa;- Risco de Fogo"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
+          vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="240" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- Sistema -->
+        <mxCell id="3" value="Plataforma de Engenharia de Dados Ambiental&#xa;(Azure + Databricks)"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;"
+          vertex="1" parent="1">
+          <mxGeometry x="360" y="200" width="300" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- Usuários -->
+        <mxCell id="4" value="Analistas Ambientais&#xa;Pesquisadores&#xa;Ferramentas BI"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+          vertex="1" parent="1">
+          <mxGeometry x="760" y="200" width="240" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- Conexões -->
+        <mxCell id="5" style="endArrow=block;html=1;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="6" style="endArrow=block;html=1;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
