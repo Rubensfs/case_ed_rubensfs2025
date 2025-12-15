@@ -1,0 +1,99 @@
+resources:
+  jobs:
+    Pipeline_INPE_RiscoFogo_Diaria:
+      name: Pipeline_INPE_RiscoFogo_Diaria
+      description: Pipeline completo INPE Focos Queimadas (RAW → BRONZE → SILVER → GOLD)
+      schedule:
+        quartz_cron_expression: 0 0 7 * * ?
+        timezone_id: America/Sao_Paulo
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: job_capture_nc_inpe
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/API/capture_ingesta_inpe_risco_fogo_diario
+            base_parameters:
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              url_csv: https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_
+              destino: /Volumes/datamasters/raw/raw_inpe
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Baixa o arquivo nc diário de Risco de Fogo do INPE e grava na
+            camada RAW
+        - task_key: job_d_ingesta_FireRisk
+          depends_on:
+            - task_key: job_capture_nc_inpe
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/bronze/ingesta_d_risco_fogo
+            base_parameters:
+              catalog: datamasters
+              schema: b_inep
+              table: risco_fogo_diario
+              path_raw: /Volumes/datamasters/raw/raw_inpe
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+            source: WORKSPACE
+          existing_cluster_id: 1207-000934-3vc2ja8p
+          libraries:
+            - pypi:
+                package: xarray
+            - pypi:
+                package: netCDF4
+            - pypi:
+                package: rasterio
+            - pypi:
+                package: "scipy "
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Lê o CSV da camada RAW e grava na tabela Bronze
+        - task_key: job_d_FireRisk_silver
+          depends_on:
+            - task_key: job_d_ingesta_FireRisk
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/silver/d_firerisk_inc_silver
+            base_parameters:
+              catalog: datamasters
+              schema_bronze: b_inep
+              table_bronze: risco_fogo_diario
+              schema_silver: s_inep
+              table_silver: d_risco_fogo_format
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Lê a tabela Bronze e aplica sanitização, grava na tabela Silver
+        - task_key: job_d_risco_fogo_gold_agregado
+          depends_on:
+            - task_key: job_d_FireRisk_silver
+          notebook_task:
+            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/gold/d_risco_fogo_gold_agg
+            base_parameters:
+              catalog: datamasters
+              schema_silver: s_inep
+              table_silver: d_risco_fogo_format
+              schema_gold: g_inep
+              table_gold: d_risco_fogo_agg
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+            source: WORKSPACE
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Agrega dados da camada Silver em métricas diárias (por UF e Bioma)
+      job_clusters:
+        - job_cluster_key: Shared_Cluster
+          new_cluster:
+            cluster_name: ""
+            spark_version: 14.3.x-scala2.12
+            node_type_id: Standard_D4pds_v6
+            enable_elastic_disk: true
+            data_security_mode: DATA_SECURITY_MODE_DEDICATED
+            runtime_engine: STANDARD
+            kind: CLASSIC_PREVIEW
+            is_single_node: false
+            num_workers: 1
+      queue:
+        enabled: true
+      parameters:
+        - name: data_ref_carga
+          default: "{{job.trigger.time.iso_date}}"
