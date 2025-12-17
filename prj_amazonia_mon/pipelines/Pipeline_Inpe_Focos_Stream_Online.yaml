@@ -3,13 +3,21 @@ resources:
     Pipeline_Inpe_Focos_Stream_Online:
       name: Pipeline_Inpe_Focos_Stream_Online
       description: Streaming INPE Focos 10min (DATA_ALVO por parâmetro)
+
+      git_source:
+        git_url: https://github.com/Rubensfs/case_ed_rubensfs2025.git
+        git_provider: gitHub
+        git_branch: main
+
       tasks:
         - task_key: stream_inpe_focos
           notebook_task:
-            notebook_path: /Workspace/Users/rubens_spam@outlook.com/case_ed_rubensfs2025/prj_amazonia_mon/notebooks/API/Inpe_Focos_queim_Stream_10
+            notebook_path: prj_amazonia_mon/notebooks/API/Inpe_Focos_queim_Stream_10
+            source: GIT
             base_parameters:
               DATA_ALVO: "{{job.start_time.iso_date}}"
-            source: WORKSPACE
+
       queue:
         enabled: true
+
       performance_target: PERFORMANCE_OPTIMIZED
