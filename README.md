@@ -1,380 +1,222 @@
-# case_ed_rubensfs2025
-Case para processo de certificação DataMasters_Engenharia de Dados do Santander - 2025
+# Case de Engenharia de Dados — Monitoramento Ambiental da Amazônia
+
+**Projeto:** case_ed_rubensfs2025
+**Certificação:** DataMasters — Engenharia de Dados (Santander | 2025)
+
 ---
-🌱 Case de Engenharia de Dados
-Monitoramento Ambiental da Amazônia com Dados Públicos do INPE
 
-📌 Visão Geral
+## Resumo Executivo
 
-Este projeto apresenta uma solução completa de engenharia de dados, desenvolvida para ingestão, processamento, armazenamento e análise de dados ambientais públicos relacionados ao monitoramento da Floresta Amazônica.
+Este projeto apresenta uma solução corporativa de **engenharia de dados em ambiente cloud**, desenvolvida para ingestão, processamento, armazenamento e análise de dados ambientais públicos do **INPE**, com foco no monitoramento da Floresta Amazônica.
 
-A solução foi construída utilizando arquitetura Lakehouse, pipelines batch, eventuais e near real-time, processamento distribuído com PySpark, armazenamento em Delta Lake e execução em cloud Microsoft Azure (Databricks).
+A solução adota uma **arquitetura Lakehouse**, combinando pipelines batch, eventuais e near real-time, utilizando **Databricks, PySpark e Delta Lake** na **Microsoft Azure**. O objetivo é demonstrar, de forma prática, competências técnicas, arquiteturais e de governança de dados exigidas em ambientes corporativos de alta criticidade, como o setor financeiro.
 
-O projeto demonstra a aplicação prática de boas práticas de engenharia de dados, incluindo:
+---
 
-Arquitetura escalável e resiliente
+## 1. Objetivo do Case
 
-Padronização e governança de dados
+Projetar e implementar uma arquitetura de dados escalável, segura e reprodutível, capaz de:
 
-Observabilidade de pipelines
+* Consumir dados públicos confiáveis
+* Processar grandes volumes de dados ambientais
+* Disponibilizar informações consolidadas para análise
+* Permitir evolução para cenários de processamento near real-time
 
-Segurança e conformidade com LGPD
+Este case foi desenvolvido como parte do processo de **certificação DataMasters — Engenharia de Dados**, evidenciando boas práticas aplicáveis a ambientes corporativos e regulados.
 
-Reprodutibilidade da solução
+---
 
+## 2. Tema
 
-I. 🎯 Objetivo do Case
+**Meio Ambiente — Monitoramento da Floresta Amazônica**
 
-Projetar e implementar uma arquitetura de dados capaz de:
+A escolha do tema se justifica pela relevância ambiental, social e econômica, aliada à ampla disponibilidade de dados governamentais abertos mantidos pelo **Instituto Nacional de Pesquisas Espaciais (INPE)**.
 
-Consumir datasets públicos confiáveis
+---
 
-Processar grandes volumes de dados ambientais
+## 3. Fontes de Dados
 
-Disponibilizar dados consolidados para análises
+Os dados utilizados são obtidos a partir do portal oficial **TerraBrasilis / INPE**:
 
-Permitir evolução para cenários de processamento em tempo quase real
+🔗 [https://terrabrasilis.dpi.inpe.br/](https://terrabrasilis.dpi.inpe.br/)
 
-Tema Escolhido
+### Conjuntos de Dados Utilizados
 
-Meio Ambiente — Monitoramento da Floresta Amazônica
+**1. Desmatamento — PRODES / INPE**
 
-A escolha do tema se justifica pela relevância ambiental, social e econômica, além da ampla disponibilidade de dados governamentais abertos, mantidos pelo Instituto Nacional de Pesquisas Espaciais (INPE).
+* Formatos: XML, Shapefile
+* Descrição: Dados e mapas de desmatamento por bioma e por período
 
+**2. Focos de Queimadas**
 
-II. 🌍 Fontes de Dados
+* Formato: CSV
+* Periodicidade:
 
-Os dados utilizados no projeto são obtidos a partir do portal oficial TerraBrasilis / INPE:
+  * Batch diário e mensal
+  * Near real-time (atualizações a cada 10 minutos)
+* Descrição: Informações sobre focos ativos de queimadas e incêndios florestais
 
-🔗 https://terrabrasilis.dpi.inpe.br/
+**3. Risco de Fogo e Meteorologia**
 
+* Formatos: NetCDF (.nc), TIF
+* Descrição: Dados observados e previsões meteorológicas utilizadas para cálculo de risco de fogo
 
-📊 Conjuntos de Dados Utilizados
-1. Desmatamento — PRODES / INPE
+---
 
-Formatos: XML, Shapefile
+## 4. Arquitetura da Solução
 
-Descrição:
-Dados e mapas de desmatamento para todo o Brasil e por biomas, com calendários de publicação independentes.
+### Visão Geral
 
-2. Focos de Queimadas
+A solução segue o padrão **Lakehouse**, integrando Data Lake e camadas analíticas confiáveis:
 
-Formato: CSV
+```
+INPE → RAW → BRONZE → SILVER → GOLD → Consumo Analítico
+```
 
-Periodicidade:
+### Tecnologias Utilizadas
 
-Batch diário e mensal
+| Camada        | Tecnologia             |
+| ------------- | ---------------------- |
+| Cloud         | Microsoft Azure        |
+| Processamento | Databricks + PySpark   |
+| Armazenamento | Delta Lake             |
+| Orquestração  | Databricks Jobs (YAML) |
+| Versionamento | GitHub                 |
+| Monitoramento | Databricks Jobs UI     |
 
-Near real-time (atualizações a cada 10 minutos)
+---
 
-Descrição:
-Informações sobre focos ativos de queimadas e incêndios florestais.
+## 5. Diagramas de Arquitetura (C4 Model)
 
-3. Risco de Fogo e Meteorologia
+A documentação visual segue o **C4 Model**, facilitando o entendimento da solução em diferentes níveis de abstração.
 
-Formatos: NetCDF (.nc), TIF
+* **C4 – Nível 1 (Contexto):** `diagrams/c4_context_amazonia.drawio`
+* **C4 – Nível 2 (Containers):** `diagrams/c4_container_architecture.drawio`
+* **C4 – Nível 3 (Componentes):** `diagrams/c4_pipeline_components.drawio`
 
-Descrição:
-Dados observados diariamente e previsões meteorológicas de curto prazo, utilizados para cálculo do risco de fogo.
+---
 
+## 6. Arquitetura de Dados — Medalhão
 
-III. 🏗️ Arquitetura da Solução
-Visão Geral da Arquitetura
+| Camada | Descrição                              |
+| ------ | -------------------------------------- |
+| RAW    | Dados brutos, sem transformações       |
+| BRONZE | Padronização inicial e versionamento   |
+| SILVER | Dados tratados, tipados e confiáveis   |
+| GOLD   | Dados agregados e prontos para análise |
 
-A solução foi projetada seguindo o padrão Lakehouse, combinando:
+---
 
-Data Lake para armazenamento de dados brutos e históricos
+## 7. Pipelines Implementados
 
-Camadas analíticas para consumo confiável e estruturado
+As pipelines foram desenvolvidas considerando padrões corporativos, com separação clara de responsabilidades, controle de falhas e reprocessamento.
 
-Tecnologias Utilizadas
-Camada	Tecnologia
-Cloud	Microsoft Azure
-Processamento	Databricks + PySpark
-Armazenamento	Delta Lake
-Orquestração	Databricks Jobs (YAML)
-Versionamento	GitHub
-Monitoramento	Databricks Jobs UI
-IV. 📐 Diagramas de Arquitetura (C4 Model)
+### Pipeline — Focos de Queimadas (Batch Diário)
 
-A documentação visual da solução segue o C4 Model, facilitando o entendimento da arquitetura em diferentes níveis de detalhe.
+* **Pipeline:** Pipeline_INPE_FocosQueimadas_Diaria
+* **Formato:** CSV
+* **Periodicidade:** Diária
 
-🔹 C4 – Nível 1: Contexto
+Camadas impactadas:
 
-Apresenta a interação entre:
+* RAW: `/Volumes/datamasters/raw/raw_inpe`
+* BRONZE: `datamasters.b_inep.focos_queimadas_diario`
+* SILVER: `datamasters.s_inep.d_foco_queim_format`
+* GOLD: `datamasters.g_inep.d_focos_queimadas_agg`
 
-Fontes externas (INPE / TerraBrasilis)
+---
 
-Plataforma de Engenharia de Dados
+### Pipeline — Risco de Fogo (Batch Diário)
 
-Usuários e ferramentas analíticas
+* **Pipeline:** Pipeline_INPE_RiscoFogo_Diaria
+* **Formato:** NetCDF (.nc)
+* **Periodicidade:** Diária
 
-📁 Arquivo:
-diagrams/c4_context_amazonia.drawio
+Camadas impactadas:
 
-🔹 C4 – Nível 2: Containers
+* RAW: `/Volumes/datamasters/raw/raw_inpe`
+* BRONZE: `datamasters.b_inep.ingesta_d_risco_fogo`
+* SILVER: `datamasters.s_inep.d_firerisk_inc_silver`
+* GOLD: `datamasters.g_inep.d_risco_fogo_gold_agg`
 
-Demonstra os principais componentes da solução:
+---
 
-Azure Blob Storage (camada RAW)
+### Pipeline — Desmatamento PRODES (Execução Eventual)
 
-Databricks (processamento distribuído)
+* **Pipeline:** Pipeline_tbra_xml_Eventual
+* **Formato:** XML
+* **Execução:** Sob demanda
 
-Delta Lake (Bronze, Silver e Gold)
+Camadas impactadas:
 
-Consumo analítico
+* RAW: `/Volumes/datamasters/raw/raw_tbra`
+* BRONZE: `datamasters.b_tbra.e_prodes_brasil`
+* SILVER: `datamasters.s_tbra.prodes_brasil_process`
+* GOLD: `datamasters.g_tbra.prodes_brasil_valor`
 
-📁 Arquivo:
-diagrams/c4_container_architecture.drawio
+---
 
-🔹 C4 – Nível 3: Componentes
+### Pipeline — Focos de Queimadas (Near Real-Time)
 
-Detalha os pipelines e suas etapas internas:
-
-Extração de dados
-
-Ingestão Bronze
-
-Processamento Silver
-
-Agregações Gold
-
-📁 Arquivo:
-diagrams/c4_pipeline_components.drawio
-
-
-V. 🧩 Arquitetura de Dados (Medalhão)
-
-O projeto adota o padrão Medallion Architecture, organizando os dados em camadas bem definidas:
-
-Camada	Descrição
-RAW	Dados brutos, sem qualquer transformação
-BRONZE	Padronização inicial e versionamento
-SILVER	Dados tratados, tipados e confiáveis
-GOLD	Dados agregados e prontos para análise
-
-VI. 🔄 Pipelines Implementados
-
-Esta seção descreve os pipelines de ingestão e processamento desenvolvidos no projeto, contemplando execuções batch, eventuais e near real-time, todos organizados segundo a arquitetura medalhão.
-
-🔥 Pipeline — Focos de Queimadas (Batch Diário)
-
-Pipeline: Pipeline_INPE_FocosQueimadas_Diaria
-Formato dos dados: CSV
-Periodicidade: Diária
-
-🔹 Extração (RAW)
-
-Job: capture_raw_focos_diario_d
-
-Descrição:
-Download diário do arquivo focos_diario_br_aaaammdd.csv a partir da API pública do INPE.
-
-Armazenamento RAW:
-/Volumes/datamasters/raw/raw_inpe
-
-🔹 Ingestão Bronze
-
-Job: ingesta_d_foco_queim
-
-Tabela Bronze:
-datamasters.b_inep.focos_queimadas_diario
-
-🔹 Processamento Silver
-
-Job: process_d_foco_queim_silver
-
-Tabela Silver:
-datamasters.s_inep.d_foco_queim_format
-
-🔹 Agregação Gold
-
-Job: d_foco_queim_gold_agregado
-
-Tabela Gold:
-datamasters.g_inep.d_focos_queimadas_agg
-
-🌡️ Pipeline — Risco de Fogo (Batch Diário)
-
-Pipeline: Pipeline_INPE_RiscoFogo_Diaria
-Formato dos dados: NetCDF (.nc)
-Periodicidade: Diária
-
-🔹 Extração (RAW)
-
-Job: capture_ingesta_inpe_risco_fogo_diario
-
-Armazenamento RAW:
-/Volumes/datamasters/raw/raw_inpe
-
-🔹 Ingestão Bronze
-
-Job: ingesta_d_risco_fogo
-
-Tabela Bronze:
-datamasters.b_inep.ingesta_d_risco_fogo
-
-🔹 Processamento Silver
-
-Job: d_firerisk_inc_silver
-
-Tabela Silver:
-datamasters.s_inep.d_firerisk_inc_silver
-
-🔹 Agregação Gold
-
-Job: d_risco_fogo_gold_agg
-
-Tabela Gold:
-datamasters.g_inep.d_risco_fogo_gold_agg
-
-🌳 Pipeline — Desmatamento PRODES (Execução Eventual)
-
-Pipeline: Pipeline_tbra_xml_Eventual.yaml
-Formato dos dados: XML
-Periodicidade: Eventual (sob demanda)
-
-🔹 Extração (RAW)
-
-Job: INPE_Raw_Download
-
-Armazenamento RAW:
-/Volumes/datamasters/raw/raw_tbra
-
-🔹 Ingestão Bronze
-
-Job: ingesta_raw_xml
-
-Tabela Bronze:
-datamasters.b_tbra.e_prodes_brasil
-
-🔹 Processamento Silver
-
-Job: process_silver_xml
-
-Tabela Silver:
-datamasters.s_tbra.prodes_brasil_process
-
-🔹 Agregação Gold
-
-Job: e_tbras_xml_gold_valor
-
-Tabela Gold:
-datamasters.g_tbra.prodes_brasil_valor
-
-⏱️ Pipeline — Focos de Queimadas (Streaming 10 Min)
-
-Pipeline: Pipeline_inpe_focos_on.yaml
-Formato dos dados: CSV
-Execução: Manual (iniciar e cancelar)
-
-🔹 Captura Near Real-Time (RAW)
-
-Notebook: Inpe_Focos_queim_Stream_10.ipynb
+* **Pipeline:** Pipeline_inpe_focos_on
+* **Formato:** CSV
+* **Execução:** Manual (start / stop)
+* **Frequência:** A cada 10 minutos
 
 Fonte:
-https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/10min/
+[https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/10min/](https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/10min/)
 
-Armazenamento RAW:
-/Volumes/datamasters/raw/raw_inpe/inpe_in/
+RAW:
+`/Volumes/datamasters/raw/raw_inpe/inpe_in/`
 
+---
 
-**EM docs/ em a evidencia de teste intergrado,com a execuções completas das pipelines**
+## 8. Observabilidade e Custos
 
+* Monitoramento de execuções via Databricks Jobs
+* Logs de falhas e tempo de execução
+* Uso de clusters com auto scaling e auto-terminate
+* Base preparada para integração com Azure Monitor
 
-VII. 📊 Observabilidade
+---
 
-A observabilidade da solução é garantida por:
+## 9. Segurança e LGPD
 
-Monitoramento de execuções via Databricks Jobs
+* Controle de acesso baseado em RBAC
+* Segregação de ambientes, volumes e tabelas
+* Criptografia de dados at rest e in transit
+* Práticas alinhadas à LGPD
 
-Logs de falhas e tempo de execução
+---
 
-Métricas de consumo de recursos
+## 10. Reprodutibilidade
 
-Base para integração futura com Azure Monitor
+* Código versionado em GitHub
+* Pipelines definidas em YAML
+* Scripts de ingestão e processamento documentados
+* Evidências de testes integrados disponíveis em `docs/`
 
+---
 
-VIII. 🔐 Segurança e LGPD
+## 11. Melhorias Futuras
 
-Controle de acesso baseado em RBAC do Azure
+* Integração com Apache Kafka
+* Ingestão de imagens de satélite
+* Dashboards analíticos (Power BI)
+* Catálogo de dados e lineage
+* Modelos preditivos de risco ambiental
 
-Segregação de workspaces, volumes e tabelas
+---
 
-Criptografia de dados at rest e in transit
+## Considerações Finais
 
-Práticas alinhadas à Lei Geral de Proteção de Dados (LGPD)
+Este projeto demonstra a aplicação prática de engenharia de dados moderna em um cenário real, crítico e de alto impacto social. A arquitetura proposta é escalável, segura e alinhada a padrões corporativos exigidos por instituições financeiras e ambientes regulados.
 
+---
 
-IX. 🕶️ Mascaramento de Dados
+## Repositório do Projeto
 
-Quando aplicável:
+🔗 [https://github.com/Rubensfs/case_ed_rubensfs2025](https://github.com/Rubensfs/case_ed_rubensfs2025)
 
-Criptografia de campos sensíveis via PySpark
-
-Mascaramento lógico nas camadas Silver e Gold
-
-Acesso restrito via APIs ou visões controladas
-
-
-X. 📈 Escalabilidade
-
-A solução foi projetada para escalar de forma eficiente por meio de:
-
-Auto Scaling de clusters Databricks
-
-Processamento distribuído Spark
-
-Ajuste dinâmico de recursos conforme custo e demanda
-
-Preparação para expansão com arquiteturas de streaming mais robustas
-
-
-XI. 🔁 Reprodutibilidade
-
-Para garantir reprodutibilidade da arquitetura:
-
-Todo o código está versionado em GitHub
-
-Pipelines definidos em YAML
-
-Scripts de ingestão e processamento incluídos
-
-Documentação clara para execução em outro ambiente
-
-Pré-requisitos
-
-Conta ativa na Microsoft Azure
-
-Workspace Databricks configurado
-
-Cluster com suporte a PySpark e Delta Lake
-
-
-XII. 🚀 Melhorias Futuras
-
-Integração com Apache Kafka
-
-Ingestão direta de imagens de satélite
-
-Dashboards analíticos (Power BI)
-
-Catálogo de dados e lineage
-
-Modelos preditivos de risco ambiental
-
-
-XIII. 📌 Considerações Finais
-
-Este projeto demonstra a aplicação prática de conceitos modernos de engenharia de dados em um cenário real e de alto impacto social. O uso de dados públicos ambientais, aliado a uma arquitetura escalável e segura, possibilita análises relevantes para o monitoramento e preservação da Floresta Amazônica.
-
-📎 Repositório do Projeto
-
-🔗 GitHub
-https://github.com/Rubensfs/case_ed_rubensfs2025
-✍️ **Autor**: *Rubens Ferreira de Souza*
-📅 **Ano**: 2025
-
-```
-```
-
+**Autor:** Rubens Ferreira de Souza
+**Ano:** 2025
