@@ -194,7 +194,7 @@ RAW:
 * Código versionado em GitHub
 * Pipelines definidas em YAML
 * Scripts de ingestão e processamento documentados
-* Evidências de testes integrados disponíveis em `docs/`
+* **Evidências de testes integrados disponíveis em : prj_amazonia_mon/docs/[ETI] – Evidencia de Teste Intergrado.odt**
 
 ---
 
