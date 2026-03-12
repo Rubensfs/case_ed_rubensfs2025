@@ -15,7 +15,6 @@ resources:
         pause_status: UNPAUSED
 
       tasks:
-
         # =========================================================
         # RAW — Captura diária CSV INPE
         # =========================================================
@@ -26,7 +25,7 @@ resources:
             base_parameters:
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
               url_csv: https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_
-              destino: dbfs:/FileStore/datamasters/raw/raw_inpe
+              destino: /Volumes/datamasters/raw/raw_inpe
           job_cluster_key: Shared_Cluster
           max_retries: 1
           min_retry_interval_millis: 0
@@ -42,9 +41,10 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/bronze/ingesta_d_foco_queim
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema: b_inep
               table: focos_queimadas_diario
-              path_raw: dbfs:/FileStore/datamasters/raw/raw_inpe
+              path_raw: /Volumes/datamasters/raw/raw_inpe
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
           job_cluster_key: Shared_Cluster
           max_retries: 1
@@ -61,6 +61,7 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/silver/process_d_foco_queim_silver
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema_bronze: b_inep
               table_bronze: focos_queimadas_diario
               schema_silver: s_inep
@@ -81,6 +82,7 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/gold/d_foco_queim_gold_agregado
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema_silver: s_inep
               table_silver: d_foco_queim_format
               schema_gold: g_inep
@@ -101,6 +103,7 @@ resources:
             node_type_id: Standard_DS3_v2
             num_workers: 1
             enable_elastic_disk: true
+            data_security_mode: DATA_SECURITY_MODE_DEDICATED
             runtime_engine: STANDARD
 
       queue:
