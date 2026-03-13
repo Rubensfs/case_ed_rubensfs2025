@@ -1,100 +1,91 @@
 resources:
   jobs:
-    Pipeline_INPE_RiscoFogo_Diaria:
-      name: Pipeline_INPE_RiscoFogo_Diaria
-      description: Pipeline completo INPE Risco de Fogo (RAW → BRONZE → SILVER → GOLD)
-
-      git_source:
-        git_url: https://github.com/Rubensfs/case_ed_rubensfs2025.git
-        git_provider: gitHub
-        git_branch: main
-
+    Pipeline_INPE_FocosQueimadas_Diaria:
+      name: Pipeline_INPE_FocosQueimadas_Diaria
+      description: Pipeline completo INPE Focos Queimadas (RAW → BRONZE → SILVER → GOLD)
       schedule:
         quartz_cron_expression: 0 0 7 * * ?
         timezone_id: America/Sao_Paulo
         pause_status: UNPAUSED
-
       tasks:
-
-        # =========================================================
-        # RAW — Captura NetCDF
-        # =========================================================
-        - task_key: job_capture_nc_inpe
+        - task_key: job_capture_csv_inpe
           notebook_task:
             notebook_path: prj_amazonia_mon/notebooks/API/capture_ingesta_inpe_risco_fogo_diario
-            source: GIT
             base_parameters:
-              data_ref: "{{job.parameters.data_ref_carga}}"
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              url_csv: https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_
               destino: dbfs:/FileStore/datamasters/raw/raw_inpe
-          job_cluster_key: Shared_Cluster
-          description: Baixa arquivo NetCDF diário do INPE
-
-        # =========================================================
-        # BRONZE
-        # =========================================================
-        - task_key: job_d_ingesta_FireRisk
-          depends_on:
-            - task_key: job_capture_nc_inpe
-          notebook_task:
-            notebook_path: prj_amazonia_mon/notebooks/bronze/ingesta_d_risco_fogo
             source: GIT
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Baixa o CSV diário de focos de queimadas do INPE e grava na RAW
+        - task_key: job_d_ingesta_foco_queim
+          depends_on:
+            - task_key: job_capture_csv_inpe
+          notebook_task:
+            notebook_path: prj_amazonia_mon/notebooks/bronze/ingesta_d_foco_queim
             base_parameters:
               schema: b_inep
-              table: risco_fogo_diario
+              table: focos_queimadas_diario
               path_raw: dbfs:/FileStore/datamasters/raw/raw_inpe
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
-          job_cluster_key: Shared_Cluster
-          libraries:
-            - pypi: { package: rasterio }
-            - pypi: { package: numpy }
-            - pypi: { package: pandas }
-
-        # =========================================================
-        # SILVER
-        # =========================================================
-        - task_key: job_d_FireRisk_silver
-          depends_on:
-            - task_key: job_d_ingesta_FireRisk
-          notebook_task:
-            notebook_path: prj_amazonia_mon/notebooks/silver/d_firerisk_inc_silver
             source: GIT
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Lê CSV RAW e grava tabela Bronze
+        - task_key: job_d_foco_queim_silver
+          depends_on:
+            - task_key: job_d_ingesta_foco_queim
+          notebook_task:
+            notebook_path: prj_amazonia_mon/notebooks/silver/process_d_foco_queim_silver
             base_parameters:
               schema_bronze: b_inep
-              table_bronze: risco_fogo_diario
+              table_bronze: focos_queimadas_diario
               schema_silver: s_inep
-              table_silver: d_risco_fogo_format
+              table_silver: d_foco_queim_format
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
-          job_cluster_key: Shared_Cluster
-
-        # =========================================================
-        # GOLD
-        # =========================================================
-        - task_key: job_d_risco_fogo_gold_agregado
-          depends_on:
-            - task_key: job_d_FireRisk_silver
-          notebook_task:
-            notebook_path: prj_amazonia_mon/notebooks/gold/d_risco_fogo_gold_agg
             source: GIT
+          job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Lê Bronze, aplica sanitização e grava Silver
+        - task_key: job_d_foco_queim_gold_agregado
+          depends_on:
+            - task_key: job_d_foco_queim_silver
+          notebook_task:
+            notebook_path: prj_amazonia_mon/notebooks/gold/d_foco_queim_gold_agregado
             base_parameters:
               schema_silver: s_inep
-              table_silver: d_risco_fogo_format
+              table_silver: d_foco_queim_format
               schema_gold: g_inep
-              table_gold: d_risco_fogo_agg
+              table_gold: d_focos_queimadas_agg
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
+            source: GIT
           job_cluster_key: Shared_Cluster
-
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Agrega dados Silver em métricas diárias (UF e Bioma)
       job_clusters:
         - job_cluster_key: Shared_Cluster
           new_cluster:
             spark_version: 14.3.x-scala2.12
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*]
+            azure_attributes:
+              availability: ON_DEMAND_AZURE
             node_type_id: Standard_D4s_v3
-            num_workers: 1
             enable_elastic_disk: true
             runtime_engine: STANDARD
-
+            num_workers: 0
+      git_source:
+        git_url: https://github.com/Rubensfs/case_ed_rubensfs2025.git
+        git_provider: gitHub
+        git_branch: main
       queue:
         enabled: true
-
       parameters:
         - name: data_ref_carga
           default: "{{job.trigger.time.iso_date}}"
