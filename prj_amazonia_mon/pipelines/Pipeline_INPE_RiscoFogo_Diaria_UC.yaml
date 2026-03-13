@@ -15,22 +15,24 @@ resources:
         pause_status: UNPAUSED
 
       tasks:
-
         # =========================================================
-        # RAW — Captura NetCDF
+        # RAW — Captura diária NetCDF (INPE)
         # =========================================================
         - task_key: job_capture_nc_inpe
           notebook_task:
             notebook_path: prj_amazonia_mon/notebooks/API/capture_ingesta_inpe_risco_fogo_diario
             source: GIT
             base_parameters:
-              data_ref: "{{job.parameters.data_ref_carga}}"
-              destino: dbfs:/FileStore/datamasters/raw/raw_inpe
+              data_ref_carga: "{{job.parameters.data_ref_carga}}"
+              url_csv: https://dataserver-coids.inpe.br/queimadas/queimadas/focos/csv/diario/Brasil/focos_diario_br_
+              destino: /Volumes/datamasters/raw/raw_inpe
           job_cluster_key: Shared_Cluster
-          description: Baixa arquivo NetCDF diário do INPE
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Baixa arquivo NetCDF diário de Risco de Fogo do INPE e grava na RAW
 
         # =========================================================
-        # BRONZE
+        # BRONZE — Ingestão NetCDF
         # =========================================================
         - task_key: job_d_ingesta_FireRisk
           depends_on:
@@ -39,18 +41,23 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/bronze/ingesta_d_risco_fogo
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema: b_inep
               table: risco_fogo_diario
-              path_raw: dbfs:/FileStore/datamasters/raw/raw_inpe
+              path_raw: /Volumes/datamasters/raw/raw_inpe
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
           job_cluster_key: Shared_Cluster
           libraries:
+            - pypi: { package: xarray }
+            - pypi: { package: netCDF4 }
             - pypi: { package: rasterio }
-            - pypi: { package: numpy }
-            - pypi: { package: pandas }
+            - pypi: { package: scipy }
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Lê NetCDF da RAW e grava tabela Bronze
 
         # =========================================================
-        # SILVER
+        # SILVER — Tratamento
         # =========================================================
         - task_key: job_d_FireRisk_silver
           depends_on:
@@ -59,15 +66,19 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/silver/d_firerisk_inc_silver
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema_bronze: b_inep
               table_bronze: risco_fogo_diario
               schema_silver: s_inep
               table_silver: d_risco_fogo_format
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
           job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Sanitiza dados Bronze e grava Silver
 
         # =========================================================
-        # GOLD
+        # GOLD — Agregações
         # =========================================================
         - task_key: job_d_risco_fogo_gold_agregado
           depends_on:
@@ -76,20 +87,28 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/gold/d_risco_fogo_gold_agg
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema_silver: s_inep
               table_silver: d_risco_fogo_format
               schema_gold: g_inep
               table_gold: d_risco_fogo_agg
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
           job_cluster_key: Shared_Cluster
+          max_retries: 1
+          min_retry_interval_millis: 0
+          description: Agrega dados Silver em métricas diárias (UF e Bioma)
 
+      # =========================================================
+      # CLUSTER DO JOB
+      # =========================================================
       job_clusters:
         - job_cluster_key: Shared_Cluster
           new_cluster:
             spark_version: 14.3.x-scala2.12
-            node_type_id: Standard_D4s_v3
+            node_type_id: Standard_DS3_v2
             num_workers: 1
             enable_elastic_disk: true
+            data_security_mode: DATA_SECURITY_MODE_DEDICATED
             runtime_engine: STANDARD
 
       queue:

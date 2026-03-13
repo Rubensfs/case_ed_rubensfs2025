@@ -10,7 +10,6 @@ resources:
         git_branch: main
 
       tasks:
-
         # =========================================================
         # RAW — Download XML TerraBrasilis
         # =========================================================
@@ -19,10 +18,10 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/API/INPE_Raw_Download_xml
             source: GIT
             base_parameters:
+              catalog: datamasters
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
               uuid_metadata: "{{job.parameters.uuid_metadata}}"
               file_prefix: "{{job.parameters.file_prefix}}"
-              destino: dbfs:/FileStore/datamasters/raw/raw_tbra
           job_cluster_key: Shared_Cluster
           description: Baixa XML TerraBrasilis e salva na RAW
 
@@ -36,9 +35,10 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/bronze/ingesta_raw_xml
             source: GIT
             base_parameters:
+              catalog: datamasters
               schema: b_tbra
               table: "{{job.parameters.file_prefix}}"
-              path_raw: dbfs:/FileStore/datamasters/raw/raw_tbra
+              path_raw: /Volumes/datamasters/raw/raw_tbra
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
           job_cluster_key: Shared_Cluster
           libraries:
@@ -56,6 +56,7 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/silver/process_silver_xml
             source: GIT
             base_parameters:
+              catalog: datamasters
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
               schema: b_tbra
               table: "{{job.parameters.file_prefix}}"
@@ -74,6 +75,7 @@ resources:
             notebook_path: prj_amazonia_mon/notebooks/gold/e_tbras_xml_gold_valor
             source: GIT
             base_parameters:
+              catalog: datamasters
               data_ref_carga: "{{job.parameters.data_ref_carga}}"
               schema_in: s_tbra
               table_in: "{{job.parameters.file_prefix}}_process"
@@ -89,15 +91,18 @@ resources:
         - job_cluster_key: Shared_Cluster
           new_cluster:
             spark_version: 14.3.x-scala2.12
-            node_type_id: Standard_D4s_v3
+            node_type_id: Standard_DS3_v2
             num_workers: 1
             enable_elastic_disk: true
+            data_security_mode: SINGLE_USER
             runtime_engine: STANDARD
 
       queue:
         enabled: true
 
       parameters:
+        - name: catalog
+          default: datamasters
         - name: data_ref_carga
           default: "{{job.trigger.time.iso_date}}"
         - name: uuid_metadata
